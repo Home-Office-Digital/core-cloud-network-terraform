@@ -295,3 +295,179 @@ run "private_subnets_trimmed_vpc_tag" {
     error_message = "Expected trimmed VpcName value when tag_vpc_name includes surrounding spaces"
   }
 }
+
+run "private_subnets_partial_capacity_vpc_bounds" {
+  command = plan
+
+  variables {
+    vpc_name          = "workload-partial-vpc"
+    eks_cluster1_name = ""
+    eks_cluster2_name = ""
+    tgw_id            = "tgw-0123456789abcdef0"
+    tag_vpc_name      = ""
+    tags = {
+      environment = "test"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpcs.filtered_vpcs
+    values = {
+      ids = ["vpc-11223344556677889"]
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc.selected
+    values = {
+      id         = "vpc-11223344556677889"
+      cidr_block = "10.9.0.0/25"
+    }
+  }
+
+  override_data {
+    target = data.aws_region.current
+    values = {
+      region = "eu-west-2"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.s3
+    values = {
+      id = "vpce-s3-7777"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.dynamodb
+    values = {
+      id = "vpce-ddb-7777"
+    }
+  }
+
+  assert {
+    condition     = length(aws_subnet.private) == 2
+    error_message = "Expected only 2 subnets for /25 because index 4 exceeds allowed subnet range"
+  }
+
+  assert {
+    condition     = length(aws_route_table.main_private_subnet_route_tables) == 2 && length(aws_nat_gateway.private_nat_gw) == 2
+    error_message = "Expected route tables and NAT gateways to match reduced subnet count"
+  }
+}
+
+run "private_subnets_whitespace_only_vpc_tag" {
+  command = plan
+
+  variables {
+    vpc_name          = "workload-space-vpc"
+    eks_cluster1_name = ""
+    eks_cluster2_name = ""
+    tgw_id            = "tgw-0123456789abcdef0"
+    tag_vpc_name      = "    "
+    tags = {
+      environment = "test"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpcs.filtered_vpcs
+    values = {
+      ids = ["vpc-aabbccddeeff00112"]
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc.selected
+    values = {
+      id         = "vpc-aabbccddeeff00112"
+      cidr_block = "10.10.0.0/20"
+    }
+  }
+
+  override_data {
+    target = data.aws_region.current
+    values = {
+      region = "eu-west-2"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.s3
+    values = {
+      id = "vpce-s3-8888"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.dynamodb
+    values = {
+      id = "vpce-ddb-8888"
+    }
+  }
+
+  assert {
+    condition     = length(aws_ec2_tag.tag-vpc-name) == 0
+    error_message = "Expected no VpcName tag resource when input is only whitespace"
+  }
+}
+
+run "private_subnets_single_eks_tag_only" {
+  command = plan
+
+  variables {
+    vpc_name          = "workload-single-eks-vpc"
+    eks_cluster1_name = "eks-main"
+    eks_cluster2_name = ""
+    tgw_id            = "tgw-0123456789abcdef0"
+    tag_vpc_name      = ""
+    tags = {
+      environment = "dev"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpcs.filtered_vpcs
+    values = {
+      ids = ["vpc-22334455667788990"]
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc.selected
+    values = {
+      id         = "vpc-22334455667788990"
+      cidr_block = "10.11.0.0/20"
+    }
+  }
+
+  override_data {
+    target = data.aws_region.current
+    values = {
+      region = "eu-west-2"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.s3
+    values = {
+      id = "vpce-s3-9999"
+    }
+  }
+
+  override_data {
+    target = data.aws_vpc_endpoint.dynamodb
+    values = {
+      id = "vpce-ddb-9999"
+    }
+  }
+
+  assert {
+    condition = alltrue([
+      for subnet in aws_subnet.private :
+      contains(keys(subnet.tags), "kubernetes.io/cluster/eks-main") && !contains(keys(subnet.tags), "kubernetes.io/cluster/")
+    ])
+    error_message = "Expected only the configured EKS cluster tag and no empty-key cluster tag"
+  }
+}
