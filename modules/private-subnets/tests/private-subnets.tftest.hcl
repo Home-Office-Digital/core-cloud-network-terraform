@@ -57,7 +57,7 @@ run "private_subnets_default_plan" {
   }
 
   assert {
-    condition = aws_subnet.private[0].cidr_block == "10.0.0.64/27" && aws_subnet.private[1].cidr_block == "10.0.0.96/27" && aws_subnet.private[2].cidr_block == "10.0.0.128/27"
+    condition     = aws_subnet.private[0].cidr_block == "10.0.0.64/27" && aws_subnet.private[1].cidr_block == "10.0.0.96/27" && aws_subnet.private[2].cidr_block == "10.0.0.128/27"
     error_message = "Expected subnet CIDR sequence for indexes [2,3,4]"
   }
 
@@ -78,12 +78,12 @@ run "private_subnets_default_plan" {
   }
 
   assert {
-    condition = length(aws_route_table.main_private_subnet_route_tables) == 3 && length(aws_route_table_association.main_private_subnets_association) == 3
+    condition     = length(aws_route_table.main_private_subnet_route_tables) == 3 && length(aws_route_table_association.main_private_subnets_association) == 3
     error_message = "Each subnet should have one route table and one association"
   }
 
   assert {
-    condition = length(aws_vpc_endpoint_route_table_association.main_private_subnets_private_s3) == 3 && length(aws_vpc_endpoint_route_table_association.main_private_subnets_private_dynamodb) == 3
+    condition     = length(aws_vpc_endpoint_route_table_association.main_private_subnets_private_s3) == 3 && length(aws_vpc_endpoint_route_table_association.main_private_subnets_private_dynamodb) == 3
     error_message = "Each route table should be associated to both S3 and DynamoDB endpoints"
   }
 
@@ -96,7 +96,7 @@ run "private_subnets_default_plan" {
   }
 
   assert {
-    condition = aws_subnet.private[0].availability_zone == "eu-west-2a" && aws_subnet.private[1].availability_zone == "eu-west-2b" && aws_subnet.private[2].availability_zone == "eu-west-2c"
+    condition     = aws_subnet.private[0].availability_zone == "eu-west-2a" && aws_subnet.private[1].availability_zone == "eu-west-2b" && aws_subnet.private[2].availability_zone == "eu-west-2c"
     error_message = "Expected static AZ spread across eu-west-2a/b/c"
   }
 
@@ -106,7 +106,7 @@ run "private_subnets_default_plan" {
       contains([
         for route in tolist(rt.route) :
         route.cidr_block
-      ], "0.0.0.0/0") && contains([
+        ], "0.0.0.0/0") && contains([
         for route in tolist(rt.route) :
         route.transit_gateway_id
       ], "tgw-0123456789abcdef0")
@@ -115,7 +115,7 @@ run "private_subnets_default_plan" {
   }
 
   assert {
-    condition = aws_ec2_tag.tag-vpc-name[0].value == "workload-vpc"
+    condition     = aws_ec2_tag.tag-vpc-name[0].value == "workload-vpc"
     error_message = "Expected VpcName tag resource when tag_vpc_name is set"
   }
 }
@@ -171,7 +171,7 @@ run "private_subnets_small_vpc_bounds" {
   }
 
   assert {
-    condition = length(aws_subnet.private) == 0 && length(aws_route_table.main_private_subnet_route_tables) == 0 && length(aws_nat_gateway.private_nat_gw) == 0
+    condition     = length(aws_subnet.private) == 0 && length(aws_route_table.main_private_subnet_route_tables) == 0 && length(aws_nat_gateway.private_nat_gw) == 0
     error_message = "Expected zero created resources when subnet indexes exceed max subnets"
   }
 }
@@ -235,7 +235,7 @@ run "private_subnets_optional_eks_tags_absent" {
   }
 
   assert {
-    condition = length(aws_ec2_tag.tag-vpc-name) == 0
+    condition     = length(aws_ec2_tag.tag-vpc-name) == 0
     error_message = "VpcName tag resource should not be created when tag_vpc_name is empty"
   }
 }
@@ -291,7 +291,7 @@ run "private_subnets_trimmed_vpc_tag" {
   }
 
   assert {
-    condition = length(aws_ec2_tag.tag-vpc-name) == 1 && aws_ec2_tag.tag-vpc-name[0].value == "prod-core-vpc"
+    condition     = length(aws_ec2_tag.tag-vpc-name) == 1 && aws_ec2_tag.tag-vpc-name[0].value == "prod-core-vpc"
     error_message = "Expected trimmed VpcName value when tag_vpc_name includes surrounding spaces"
   }
 }
