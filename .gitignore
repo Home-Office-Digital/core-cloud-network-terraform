@@ -1,0 +1,14 @@
+# Terraform runtime artifacts
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Terraform lock file can be committed for root modules.
+# This repository is module-focused; ignore lock files generated during local tests.
+**/.terraform.lock.hcl
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
